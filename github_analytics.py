@@ -1,9 +1,14 @@
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
+from github_errors import GitHubAPIError, check_github_response
+
 GITHUB_API = "https://api.github.com"
 GITHUB_GRAPHQL = "https://api.github.com/graphql"
+
+LANGUAGE_FETCH_WORKERS = 8
 
 CONTRIBUTION_LEVELS = {
     "NONE": 0,
@@ -38,7 +43,7 @@ def fetch_all_repos(username, token=None):
             },
             timeout=30,
         )
-        response.raise_for_status()
+        check_github_response(response)
         batch = response.json()
         if not batch:
             break
@@ -58,8 +63,15 @@ def fetch_repo_languages(full_name, token=None):
     )
     if response.status_code == 404:
         return {}
-    response.raise_for_status()
+    check_github_response(response)
     return response.json()
+
+
+def _fetch_languages_safe(full_name, token=None):
+    try:
+        return full_name, fetch_repo_languages(full_name, token=token), None
+    except GitHubAPIError as exc:
+        return full_name, None, exc
 
 
 def format_bytes(byte_count):
@@ -72,29 +84,62 @@ def format_bytes(byte_count):
         size /= 1024
 
 
-def compute_language_usage_by_bytes(repos, token=None):
+def _empty_language_result(repos_analyzed=0, warnings=None):
+    return {
+        "languages": [],
+        "total_bytes": 0,
+        "total_bytes_label": "0 B",
+        "repos_analyzed": repos_analyzed,
+        "warnings": warnings or [],
+        "failed_count": 0,
+    }
+
+
+def compute_language_usage_by_bytes(
+    repos, token=None, max_workers=LANGUAGE_FETCH_WORKERS
+):
+    original_repos = [repo for repo in repos if not repo.get("fork")]
+    if not original_repos:
+        return _empty_language_result()
+
     byte_totals = Counter()
     repos_analyzed = 0
+    warnings = []
+    failed_count = 0
+    rate_limited = False
 
-    for repo in repos:
-        if repo.get("fork"):
-            continue
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(_fetch_languages_safe, repo["full_name"], token)
+            for repo in original_repos
+        ]
 
-        languages = fetch_repo_languages(repo["full_name"], token=token)
-        if not languages:
-            continue
+        for future in as_completed(futures):
+            full_name, languages, error = future.result()
+            if error:
+                failed_count += 1
+                if error.is_rate_limit:
+                    rate_limited = True
+                    if error.user_message not in warnings:
+                        warnings.append(error.user_message)
+                continue
 
-        repos_analyzed += 1
-        for language, byte_count in languages.items():
-            byte_totals[language] += byte_count
+            if not languages:
+                continue
+
+            repos_analyzed += 1
+            for language, byte_count in languages.items():
+                byte_totals[language] += byte_count
+
+    if failed_count and not rate_limited:
+        warnings.append(
+            f"Could not load languages for {failed_count} "
+            f"repo{'s' if failed_count != 1 else ''}. Showing partial results."
+        )
 
     total_bytes = sum(byte_totals.values())
     if total_bytes == 0:
-        return {
-            "languages": [],
-            "total_bytes": 0,
-            "repos_analyzed": repos_analyzed,
-        }
+        return _empty_language_result(repos_analyzed=repos_analyzed, warnings=warnings)
 
     language_stats = []
     for language, byte_count in byte_totals.most_common():
@@ -112,6 +157,8 @@ def compute_language_usage_by_bytes(repos, token=None):
         "total_bytes": total_bytes,
         "total_bytes_label": format_bytes(total_bytes),
         "repos_analyzed": repos_analyzed,
+        "warnings": warnings,
+        "failed_count": failed_count,
     }
 
 
@@ -147,16 +194,23 @@ def fetch_contribution_graph(username, token):
         json={"query": query, "variables": {"username": username}},
         timeout=30,
     )
-    response.raise_for_status()
+    check_github_response(response)
     payload = response.json()
 
     if payload.get("errors"):
         message = payload["errors"][0].get("message", "GraphQL error")
-        raise requests.RequestException(message)
+        if "rate limit" in message.lower():
+            raise GitHubAPIError(
+                "GitHub API rate limit exceeded while loading contributions. "
+                "Try again in a few minutes.",
+                status_code=403,
+                is_rate_limit=True,
+            )
+        raise GitHubAPIError(f"Could not load contributions: {message}")
 
     user = payload.get("data", {}).get("user")
     if not user:
-        raise requests.RequestException("User not found")
+        raise GitHubAPIError("User not found while loading contributions.", status_code=404)
 
     calendar = user["contributionsCollection"]["contributionCalendar"]
     days = []
