@@ -1,97 +1,94 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Profile for {{ user.name or user.login }}</title>
-    <style>
-        body { font-family: system-ui, sans-serif; margin: 2rem; color: #1f2328; }
-        h1, h2 { margin-bottom: 0.5rem; }
-        .search-form { margin-bottom: 2rem; }
-        .profile-header { display: flex; gap: 1.5rem; align-items: center; margin-bottom: 2rem; }
-        .profile-header img { border-radius: 50%; }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .stat-card {
-            border: 1px solid #d0d7de;
-            border-radius: 8px;
-            padding: 1rem;
-            background: #f6f8fa;
-        }
-        .stat-card strong { display: block; font-size: 1.5rem; }
-        .stat-card span { color: #656d76; font-size: 0.9rem; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { border: 1px solid #d0d7de; padding: 0.6rem 0.75rem; text-align: left; }
-        th { background: #f6f8fa; }
-        tr:nth-child(even) { background: #f6f8fa; }
-        .badge { font-size: 0.75rem; background: #ddf4ff; color: #0969da; padding: 0.15rem 0.4rem; border-radius: 999px; }
-        .error { color: #cf222e; margin-bottom: 1rem; }
-        .language-list { list-style: none; padding: 0; margin: 0; }
-        .language-list li { margin-bottom: 0.35rem; }
-        .language-bars { list-style: none; padding: 0; margin: 1rem 0 2rem; max-width: 640px; }
-        .language-bars li { margin-bottom: 0.85rem; }
-        .language-bar-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.25rem;
-            font-size: 0.9rem;
-        }
-        .language-bar-track {
-            height: 10px;
-            background: #eaeef2;
-            border-radius: 999px;
-            overflow: hidden;
-        }
-        .language-bar-fill {
-            height: 100%;
-            background: #0969da;
-            border-radius: 999px;
-        }
-        .language-meta { color: #656d76; font-size: 0.85rem; margin-top: 0.25rem; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
 
-    <h1>GitHub User Profile</h1>
+{% block title %}{{ user.name or user.login }} — Developer Growth Tracker{% endblock %}
 
-    <form class="search-form" method="POST">
-        <input type="text" name="username" placeholder="Enter GitHub Username" required />
-        <button type="submit">Search</button>
-    </form>
+{% block header_search %}
+<form class="search-form search-form--inline" method="POST">
+    <input
+        class="search-input"
+        type="text"
+        name="username"
+        placeholder="Search another user…"
+        required
+    />
+    <button class="btn" type="submit">Search</button>
+</form>
+{% endblock %}
 
+{% block content %}
+<div class="card">
     <div class="profile-header">
-        <img src="{{ user.avatar_url }}" alt="profile picture" width="150" height="150">
-        <div>
-            <p><strong>Username:</strong> {{ user.login }}</p>
-            <p><strong>Name:</strong> {{ user.name or "—" }}</p>
-            <p><strong>Followers:</strong> {{ user.followers }}</p>
-            <p><strong>Following:</strong> {{ user.following }}</p>
-            <p><strong>Public Repositories:</strong> {{ user.public_repos }}</p>
+        <img class="profile-avatar" src="{{ user.avatar_url }}" alt="{{ user.login }}'s avatar">
+        <div class="profile-info">
+            <h1>{{ user.name or user.login }}</h1>
+            <p class="profile-login">@{{ user.login }}</p>
             {% if user.bio %}
-            <p><strong>Bio:</strong> {{ user.bio }}</p>
+            <p class="profile-bio">{{ user.bio }}</p>
             {% endif %}
+            <div class="profile-stats">
+                <div class="profile-stat">
+                    <strong>{{ user.followers }}</strong>
+                    <span>Followers</span>
+                </div>
+                <div class="profile-stat">
+                    <strong>{{ user.following }}</strong>
+                    <span>Following</span>
+                </div>
+                <div class="profile-stat">
+                    <strong>{{ user.public_repos }}</strong>
+                    <span>Repos</span>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-    {% if analytics_error %}
-    <p class="error">Could not load repository analytics: {{ analytics_error }}</p>
-    {% elif analytics %}
-    <h2>Repository Analytics</h2>
+<div class="card">
+    <h2 class="section-title">Contribution Activity</h2>
+    {% if contributions_error %}
+    <p class="notice">{{ contributions_error }}</p>
+    {% elif contributions %}
+    <p class="contributions-total">
+        <strong>{{ contributions.total_contributions }}</strong> contributions in the last year
+    </p>
+
+    <div class="contribution-heatmap" aria-label="Contribution heatmap for the last year">
+        {% for week in contributions.weeks %}
+        <div class="contribution-week">
+            {% for day in week.days %}
+            <div
+                class="contribution-day level-{{ day.level }}"
+                title="{{ day.date }}: {{ day.count }} contribution{% if day.count != 1 %}s{% endif %}"
+            ></div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="chart-container">
+        <canvas id="contributionsChart" aria-label="Monthly contributions chart"></canvas>
+    </div>
+    {% endif %}
+</div>
+
+{% if analytics_error %}
+<p class="error">Could not load repository analytics: {{ analytics_error }}</p>
+{% elif analytics %}
+<div class="card">
+    <h2 class="section-title">Repository Analytics</h2>
 
     <div class="stats-grid">
         <div class="stat-card">
             <strong>{{ analytics.total_repos }}</strong>
-            <span>Total Repositories</span>
+            <span>Total Repos</span>
         </div>
         <div class="stat-card">
             <strong>{{ analytics.original_repos }}</strong>
-            <span>Original Repos</span>
+            <span>Original</span>
         </div>
         <div class="stat-card">
             <strong>{{ analytics.forked_repos }}</strong>
-            <span>Forked Repos</span>
+            <span>Forked</span>
         </div>
         <div class="stat-card">
             <strong>{{ analytics.total_stars }}</strong>
@@ -107,29 +104,31 @@
         </div>
         <div class="stat-card">
             <strong>{{ analytics.total_watchers }}</strong>
-            <span>Total Watchers</span>
+            <span>Watchers</span>
         </div>
         <div class="stat-card">
             <strong>{{ analytics.average_stars }}</strong>
-            <span>Avg Stars / Repo</span>
+            <span>Avg Stars</span>
         </div>
     </div>
 
     {% if analytics.most_starred %}
-    <p>
+    <div class="highlight-box">
         <strong>Most starred:</strong>
         <a href="{{ analytics.most_starred.html_url }}" target="_blank" rel="noopener noreferrer">
             {{ analytics.most_starred.name }}
         </a>
-        ({{ analytics.most_starred.stargazers_count }} stars)
-    </p>
+        — {{ analytics.most_starred.stargazers_count }} stars
+    </div>
     {% endif %}
+</div>
 
-    {% if analytics.language_bytes and analytics.language_bytes.languages %}
-    <h2>Language Usage (by bytes)</h2>
+{% if analytics.language_bytes and analytics.language_bytes.languages %}
+<div class="card">
+    <h2 class="section-title">Language Usage</h2>
     <p class="language-meta">
-        Based on {{ analytics.language_bytes.repos_analyzed }} original repo{% if analytics.language_bytes.repos_analyzed != 1 %}s{% endif %}
-        · {{ analytics.language_bytes.total_bytes_label }} total code analyzed
+        {{ analytics.language_bytes.repos_analyzed }} original repo{% if analytics.language_bytes.repos_analyzed != 1 %}s{% endif %}
+        analyzed · {{ analytics.language_bytes.total_bytes_label }} total code
     </p>
     <ul class="language-bars">
         {% for lang in analytics.language_bytes.languages %}
@@ -144,48 +143,101 @@
         </li>
         {% endfor %}
     </ul>
-    {% endif %}
+</div>
+{% endif %}
 
-    {% if analytics.languages %}
-    <h2>Languages (by repo count)</h2>
-    <ul class="language-list">
+{% if analytics.languages %}
+<div class="card">
+    <h2 class="section-title">Languages by Repo Count</h2>
+    <ul class="language-tags">
         {% for language, count in analytics.languages %}
-        <li>{{ language }} — {{ count }} repo{% if count != 1 %}s{% endif %}</li>
+        <li class="language-tag">
+            <strong>{{ language }}</strong> · {{ count }} repo{% if count != 1 %}s{% endif %}
+        </li>
         {% endfor %}
     </ul>
-    {% endif %}
+</div>
+{% endif %}
 
-    <h2>All Repositories</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Repository</th>
-                <th>Stars</th>
-                <th>Forks</th>
-                <th>Open Issues</th>
-                <th>Watchers</th>
-                <th>Language</th>
-                <th>Last Updated</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for repo in analytics.repos %}
-            <tr>
-                <td>
-                    <a href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer">{{ repo.name }}</a>
-                    {% if repo.fork %}<span class="badge">fork</span>{% endif %}
-                </td>
-                <td>{{ repo.stargazers_count }}</td>
-                <td>{{ repo.forks_count }}</td>
-                <td>{{ repo.open_issues_count }}</td>
-                <td>{{ repo.watchers_count }}</td>
-                <td>{{ repo.language or "—" }}</td>
-                <td>{{ repo.updated_at[:10] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
+<div class="card">
+    <h2 class="section-title">All Repositories</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Repository</th>
+                    <th>Stars</th>
+                    <th>Forks</th>
+                    <th>Issues</th>
+                    <th>Watchers</th>
+                    <th>Language</th>
+                    <th>Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for repo in analytics.repos %}
+                <tr>
+                    <td>
+                        <a href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer">{{ repo.name }}</a>
+                        {% if repo.fork %}<span class="badge">fork</span>{% endif %}
+                    </td>
+                    <td>{{ repo.stargazers_count }}</td>
+                    <td>{{ repo.forks_count }}</td>
+                    <td>{{ repo.open_issues_count }}</td>
+                    <td>{{ repo.watchers_count }}</td>
+                    <td>{{ repo.language or "—" }}</td>
+                    <td>{{ repo.updated_at[:10] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
 
-</body>
-</html>
+{% block scripts %}
+{% if contributions and contributions.monthly %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const monthlyData = {{ contributions.monthly | tojson }};
+    const ctx = document.getElementById("contributionsChart");
+
+    Chart.defaults.color = "#8b949e";
+    Chart.defaults.borderColor = "#30363d";
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: monthlyData.map((entry) => entry.month),
+            datasets: [{
+                label: "Contributions",
+                data: monthlyData.map((entry) => entry.count),
+                borderColor: "#3fb950",
+                backgroundColor: "rgba(63, 185, 80, 0.12)",
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4,
+                pointBackgroundColor: "#3fb950",
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+            },
+            scales: {
+                x: {
+                    grid: { color: "rgba(48, 54, 61, 0.5)" },
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 },
+                    grid: { color: "rgba(48, 54, 61, 0.5)" },
+                },
+            },
+        },
+    });
+</script>
+{% endif %}
+{% endblock %}

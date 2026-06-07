@@ -1,19 +1,42 @@
-<!DOCTYPE HTML>
-<html>
+{% extends "base.html" %}
 
-<head>
-    <title>Github Analytics Dashboard</title>
-</head>
+{% block title %}Developer Growth Tracker — GitHub Analytics{% endblock %}
+{% block container_class %}container-narrow{% endblock %}
 
-<body>
+{% block content %}
+<section class="hero">
+    <span class="hero-badge">GitHub Developer Analytics</span>
+    <h1>Track any developer's GitHub growth</h1>
+    <p>
+        Enter a username to explore repositories, language usage,
+        contribution activity, and profile metrics — all in one dashboard.
+    </p>
 
-    <h1>Github Analytics Dashboard</h1>
-
-    <form method="POST">
-        <input type="text" name="username" placeholder="Enter GitHub Username" required />
-        <button type="submit">Search</button>
+    <form class="search-form" method="POST">
+        <input
+            class="search-input"
+            type="text"
+            name="username"
+            placeholder="e.g. torvalds"
+            required
+            autofocus
+        />
+        <button class="btn" type="submit">Analyze</button>
     </form>
 
-</body>
-
-</html>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h3>📊 Repo Analytics</h3>
+            <p>Stars, forks, issues, and watchers across all public repositories.</p>
+        </div>
+        <div class="feature-card">
+            <h3>💻 Languages</h3>
+            <p>Byte-level breakdown of languages used across original repos.</p>
+        </div>
+        <div class="feature-card">
+            <h3>🟩 Contributions</h3>
+            <p>Yearly heatmap and monthly activity chart from GitHub's graph data.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

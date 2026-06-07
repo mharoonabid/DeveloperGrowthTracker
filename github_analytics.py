@@ -3,6 +3,15 @@ from collections import Counter
 import requests
 
 GITHUB_API = "https://api.github.com"
+GITHUB_GRAPHQL = "https://api.github.com/graphql"
+
+CONTRIBUTION_LEVELS = {
+    "NONE": 0,
+    "FIRST_QUARTILE": 1,
+    "SECOND_QUARTILE": 2,
+    "THIRD_QUARTILE": 3,
+    "FOURTH_QUARTILE": 4,
+}
 
 
 def _api_headers(token=None):
@@ -103,6 +112,80 @@ def compute_language_usage_by_bytes(repos, token=None):
         "total_bytes": total_bytes,
         "total_bytes_label": format_bytes(total_bytes),
         "repos_analyzed": repos_analyzed,
+    }
+
+
+def fetch_contribution_graph(username, token):
+    if not token:
+        raise ValueError("GITHUB_TOKEN is required for contribution data")
+
+    query = """
+    query($username: String!) {
+      user(login: $username) {
+        contributionsCollection {
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                contributionCount
+                date
+                contributionLevel
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    response = requests.post(
+        GITHUB_GRAPHQL,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        json={"query": query, "variables": {"username": username}},
+        timeout=30,
+    )
+    response.raise_for_status()
+    payload = response.json()
+
+    if payload.get("errors"):
+        message = payload["errors"][0].get("message", "GraphQL error")
+        raise requests.RequestException(message)
+
+    user = payload.get("data", {}).get("user")
+    if not user:
+        raise requests.RequestException("User not found")
+
+    calendar = user["contributionsCollection"]["contributionCalendar"]
+    days = []
+    weeks = []
+
+    for week in calendar["weeks"]:
+        week_days = []
+        for day in week["contributionDays"]:
+            day_data = {
+                "date": day["date"],
+                "count": day["contributionCount"],
+                "level": CONTRIBUTION_LEVELS.get(day["contributionLevel"], 0),
+            }
+            days.append(day_data)
+            week_days.append(day_data)
+        weeks.append({"days": week_days})
+
+    monthly_totals = Counter()
+    for day in days:
+        monthly_totals[day["date"][:7]] += day["count"]
+
+    return {
+        "total_contributions": calendar["totalContributions"],
+        "days": days,
+        "weeks": weeks,
+        "monthly": [
+            {"month": month, "count": count}
+            for month, count in sorted(monthly_totals.items())
+        ],
     }
 
 

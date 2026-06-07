@@ -1,17 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Username not found</title>
-</head>
-<body>
-    <h3>The following username not found {{ user.name }}</h3>
-    <h2>Search Again</h2>
+{% extends "base.html" %}
 
-    <form method="POST">
-        <input type="text" name="username" placeholder="Enter GitHub Username" required />
-        <button type="submit">Search</button>
+{% block title %}User not found — Developer Growth Tracker{% endblock %}
+{% block container_class %}container-narrow{% endblock %}
+
+{% block content %}
+<section class="not-found">
+    <div class="not-found-icon">🔍</div>
+    <h1>User not found</h1>
+    <p>No GitHub account exists for <code>{{ user }}</code>. Check the spelling and try again.</p>
+
+    <form class="search-form" method="POST">
+        <input
+            class="search-input"
+            type="text"
+            name="username"
+            placeholder="Enter GitHub Username"
+            required
+            autofocus
+        />
+        <button class="btn" type="submit">Search</button>
     </form>
-</body>
-</html>
+</section>
+{% endblock %}

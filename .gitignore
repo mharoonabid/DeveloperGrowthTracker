@@ -1,3 +1,6 @@
 # for python environment
 .venv/
 __pycache__/
+
+# secrets
+.env

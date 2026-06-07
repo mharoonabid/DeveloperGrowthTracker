@@ -8,6 +8,7 @@ from github_analytics import (
     compute_language_usage_by_bytes,
     compute_repo_analytics,
     fetch_all_repos,
+    fetch_contribution_graph,
 )
 
 load_dotenv()
@@ -36,6 +37,9 @@ def home():
 
         analytics = None
         analytics_error = None
+        contributions = None
+        contributions_error = None
+
         try:
             repos = fetch_all_repos(username, token=GITHUB_TOKEN)
             analytics = compute_repo_analytics(repos)
@@ -45,11 +49,23 @@ def home():
         except requests.RequestException as exc:
             analytics_error = str(exc)
 
+        if GITHUB_TOKEN:
+            try:
+                contributions = fetch_contribution_graph(username, GITHUB_TOKEN)
+            except (requests.RequestException, ValueError) as exc:
+                contributions_error = str(exc)
+        else:
+            contributions_error = (
+                "Set GITHUB_TOKEN in .env to load contribution data."
+            )
+
         return render_template(
             "profile.html",
             user=user,
             analytics=analytics,
             analytics_error=analytics_error,
+            contributions=contributions,
+            contributions_error=contributions_error,
         )
 
     return render_template("index.html")
