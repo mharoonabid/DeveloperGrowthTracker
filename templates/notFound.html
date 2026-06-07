@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Username not found</title>
+</head>
+<body>
+    <h3>The following username not found {{ user.name }}</h3>
+    <h2>Search Again</h2>
+
+    <form method="POST">
+        <input type="text" name="username" placeholder="Enter GitHub Username" required />
+        <button type="submit">Search</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile for {{ user.name }} </title>
+</head>
+<body>
+
+    <h1>GitHub User Profile</h1>
+
+    <form method="POST">
+        <input type="text" name="username" placeholder="Enter GitHub Username" required />
+        <button type="submit">Search</button>
+    </form>
+
+    <img src="{{ user.avatar_url }}" alt="profile_picture" width="150px">
+
+    <p><strong>Username:</strong> {{ user.login }}</p>
+
+    <p><strong>Name:</strong> {{ user.name }}</p>
+
+    <p><strong>Followers:</strong> {{ user.followers }}</p>
+
+    <p><strong>Following:</strong> {{ user.following }}</p>
+
+    <p><strong>Public Repositories:</strong> {{ user.public_repos }}</p>
+
+</body>
+</html>
