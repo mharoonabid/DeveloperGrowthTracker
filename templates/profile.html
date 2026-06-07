@@ -1,28 +1,191 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Profile for {{ user.name }} </title>
+    <title>Profile for {{ user.name or user.login }}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 2rem; color: #1f2328; }
+        h1, h2 { margin-bottom: 0.5rem; }
+        .search-form { margin-bottom: 2rem; }
+        .profile-header { display: flex; gap: 1.5rem; align-items: center; margin-bottom: 2rem; }
+        .profile-header img { border-radius: 50%; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f6f8fa;
+        }
+        .stat-card strong { display: block; font-size: 1.5rem; }
+        .stat-card span { color: #656d76; font-size: 0.9rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { border: 1px solid #d0d7de; padding: 0.6rem 0.75rem; text-align: left; }
+        th { background: #f6f8fa; }
+        tr:nth-child(even) { background: #f6f8fa; }
+        .badge { font-size: 0.75rem; background: #ddf4ff; color: #0969da; padding: 0.15rem 0.4rem; border-radius: 999px; }
+        .error { color: #cf222e; margin-bottom: 1rem; }
+        .language-list { list-style: none; padding: 0; margin: 0; }
+        .language-list li { margin-bottom: 0.35rem; }
+        .language-bars { list-style: none; padding: 0; margin: 1rem 0 2rem; max-width: 640px; }
+        .language-bars li { margin-bottom: 0.85rem; }
+        .language-bar-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+        .language-bar-track {
+            height: 10px;
+            background: #eaeef2;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .language-bar-fill {
+            height: 100%;
+            background: #0969da;
+            border-radius: 999px;
+        }
+        .language-meta { color: #656d76; font-size: 0.85rem; margin-top: 0.25rem; }
+    </style>
 </head>
 <body>
 
     <h1>GitHub User Profile</h1>
 
-    <form method="POST">
+    <form class="search-form" method="POST">
         <input type="text" name="username" placeholder="Enter GitHub Username" required />
         <button type="submit">Search</button>
     </form>
 
-    <img src="{{ user.avatar_url }}" alt="profile_picture" width="150px">
+    <div class="profile-header">
+        <img src="{{ user.avatar_url }}" alt="profile picture" width="150" height="150">
+        <div>
+            <p><strong>Username:</strong> {{ user.login }}</p>
+            <p><strong>Name:</strong> {{ user.name or "—" }}</p>
+            <p><strong>Followers:</strong> {{ user.followers }}</p>
+            <p><strong>Following:</strong> {{ user.following }}</p>
+            <p><strong>Public Repositories:</strong> {{ user.public_repos }}</p>
+            {% if user.bio %}
+            <p><strong>Bio:</strong> {{ user.bio }}</p>
+            {% endif %}
+        </div>
+    </div>
 
-    <p><strong>Username:</strong> {{ user.login }}</p>
+    {% if analytics_error %}
+    <p class="error">Could not load repository analytics: {{ analytics_error }}</p>
+    {% elif analytics %}
+    <h2>Repository Analytics</h2>
 
-    <p><strong>Name:</strong> {{ user.name }}</p>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <strong>{{ analytics.total_repos }}</strong>
+            <span>Total Repositories</span>
+        </div>
+        <div class="stat-card">
+            <strong>{{ analytics.original_repos }}</strong>
+            <span>Original Repos</span>
+        </div>
+        <div class="stat-card">
+            <strong>{{ analytics.forked_repos }}</strong>
+            <span>Forked Repos</span>
+        </div>
+        <div class="stat-card">
+            <strong>{{ analytics.total_stars }}</strong>
+            <span>Total Stars</span>
+        </div>
+        <div class="stat-card">
+            <strong>{{ analytics.total_forks }}</strong>
+            <span>Total Forks</span>
+        </div>
+        <div class="stat-card">
+            <strong>{{ analytics.total_open_issues }}</strong>
+            <span>Open Issues</span>
+        </div>
+        <div class="stat-card">
+            <strong>{{ analytics.total_watchers }}</strong>
+            <span>Total Watchers</span>
+        </div>
+        <div class="stat-card">
+            <strong>{{ analytics.average_stars }}</strong>
+            <span>Avg Stars / Repo</span>
+        </div>
+    </div>
 
-    <p><strong>Followers:</strong> {{ user.followers }}</p>
+    {% if analytics.most_starred %}
+    <p>
+        <strong>Most starred:</strong>
+        <a href="{{ analytics.most_starred.html_url }}" target="_blank" rel="noopener noreferrer">
+            {{ analytics.most_starred.name }}
+        </a>
+        ({{ analytics.most_starred.stargazers_count }} stars)
+    </p>
+    {% endif %}
 
-    <p><strong>Following:</strong> {{ user.following }}</p>
+    {% if analytics.language_bytes and analytics.language_bytes.languages %}
+    <h2>Language Usage (by bytes)</h2>
+    <p class="language-meta">
+        Based on {{ analytics.language_bytes.repos_analyzed }} original repo{% if analytics.language_bytes.repos_analyzed != 1 %}s{% endif %}
+        · {{ analytics.language_bytes.total_bytes_label }} total code analyzed
+    </p>
+    <ul class="language-bars">
+        {% for lang in analytics.language_bytes.languages %}
+        <li>
+            <div class="language-bar-header">
+                <span>{{ lang.name }}</span>
+                <span>{{ lang.percentage }}% · {{ lang.bytes_label }}</span>
+            </div>
+            <div class="language-bar-track">
+                <div class="language-bar-fill" style="width: {{ lang.percentage }}%"></div>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
 
-    <p><strong>Public Repositories:</strong> {{ user.public_repos }}</p>
+    {% if analytics.languages %}
+    <h2>Languages (by repo count)</h2>
+    <ul class="language-list">
+        {% for language, count in analytics.languages %}
+        <li>{{ language }} — {{ count }} repo{% if count != 1 %}s{% endif %}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <h2>All Repositories</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Repository</th>
+                <th>Stars</th>
+                <th>Forks</th>
+                <th>Open Issues</th>
+                <th>Watchers</th>
+                <th>Language</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for repo in analytics.repos %}
+            <tr>
+                <td>
+                    <a href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer">{{ repo.name }}</a>
+                    {% if repo.fork %}<span class="badge">fork</span>{% endif %}
+                </td>
+                <td>{{ repo.stargazers_count }}</td>
+                <td>{{ repo.forks_count }}</td>
+                <td>{{ repo.open_issues_count }}</td>
+                <td>{{ repo.watchers_count }}</td>
+                <td>{{ repo.language or "—" }}</td>
+                <td>{{ repo.updated_at[:10] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
 
 </body>
 </html>
