@@ -19,4 +19,5 @@ COPY static/ static/
 EXPOSE 5000
 
 # Long timeout: language analysis can take a while for users with many repos
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "app:app"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120 app:app"]
+
