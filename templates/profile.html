@@ -3,7 +3,7 @@
 {% block title %}{{ user.name or user.login }} — Developer Growth Tracker{% endblock %}
 
 {% block header_search %}
-<form class="search-form search-form--inline" method="POST">
+<form class="search-form search-form--inline" method="POST" data-loading>
     <input
         class="search-input"
         type="text"
@@ -16,6 +16,25 @@
 {% endblock %}
 
 {% block content %}
+{% if from_cache and cached_at %}
+<div class="cache-banner">
+    <span>Cached results from {{ cached_at }}</span>
+    <form method="POST" class="cache-refresh-form" data-loading>
+        <input type="hidden" name="username" value="{{ user.login }}">
+        <input type="hidden" name="refresh" value="1">
+        <button type="submit" class="btn btn--small">Refresh from GitHub</button>
+    </form>
+</div>
+{% endif %}
+
+{% if warnings %}
+<div class="alerts">
+    {% for message in warnings %}
+    <p class="warning">{{ message }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="card">
     <div class="profile-header">
         <img class="profile-avatar" src="{{ user.avatar_url }}" alt="{{ user.login }}'s avatar">
@@ -46,7 +65,7 @@
 <div class="card">
     <h2 class="section-title">Contribution Activity</h2>
     {% if contributions_error %}
-    <p class="notice">{{ contributions_error }}</p>
+    <p class="error-inline">{{ contributions_error }}</p>
     {% elif contributions %}
     <p class="contributions-total">
         <strong>{{ contributions.total_contributions }}</strong> contributions in the last year
@@ -72,7 +91,9 @@
 </div>
 
 {% if analytics_error %}
-<p class="error">Could not load repository analytics: {{ analytics_error }}</p>
+<div class="card">
+    <p class="error">Could not load repository analytics: {{ analytics_error }}</p>
+</div>
 {% elif analytics %}
 <div class="card">
     <h2 class="section-title">Repository Analytics</h2>
@@ -123,9 +144,10 @@
     {% endif %}
 </div>
 
-{% if analytics.language_bytes and analytics.language_bytes.languages %}
+{% if analytics.language_bytes %}
 <div class="card">
     <h2 class="section-title">Language Usage</h2>
+    {% if analytics.language_bytes.languages %}
     <p class="language-meta">
         {{ analytics.language_bytes.repos_analyzed }} original repo{% if analytics.language_bytes.repos_analyzed != 1 %}s{% endif %}
         analyzed · {{ analytics.language_bytes.total_bytes_label }} total code
@@ -143,6 +165,9 @@
         </li>
         {% endfor %}
     </ul>
+    {% else %}
+    <p class="empty-state">No language data available for this user's original repositories.</p>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -161,6 +186,7 @@
 
 <div class="card">
     <h2 class="section-title">All Repositories</h2>
+    {% if analytics.repos %}
     <div class="table-wrap">
         <table>
             <thead>
@@ -192,6 +218,9 @@
             </tbody>
         </table>
     </div>
+    {% else %}
+    <p class="empty-state">No public repositories to display.</p>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

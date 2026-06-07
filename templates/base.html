@@ -26,6 +26,16 @@
         Built with the GitHub API · Public profile analytics
     </footer>
 
+    <div id="loading-overlay" class="loading-overlay" hidden>
+        <div class="loading-card">
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <p class="loading-title">Analyzing profile</p>
+            <p class="loading-message">Fetching GitHub profile…</p>
+            <p class="loading-hint">Users with many repositories may take a little longer.</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/loading.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

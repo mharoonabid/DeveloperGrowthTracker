@@ -4,6 +4,10 @@
 {% block container_class %}container-narrow{% endblock %}
 
 {% block content %}
+{% if api_error %}
+<p class="error">{{ api_error }}</p>
+{% endif %}
+
 <section class="hero">
     <span class="hero-badge">GitHub Developer Analytics</span>
     <h1>Track any developer's GitHub growth</h1>
@@ -12,7 +16,7 @@
         contribution activity, and profile metrics — all in one dashboard.
     </p>
 
-    <form class="search-form" method="POST">
+    <form class="search-form" method="POST" data-loading>
         <input
             class="search-input"
             type="text"

@@ -534,6 +534,134 @@ tbody tr:hover {
     font-size: 0.9rem;
 }
 
+.cache-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--radius-sm);
+    background: rgba(88, 166, 255, 0.08);
+    border: 1px solid rgba(88, 166, 255, 0.35);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.cache-refresh-form {
+    margin: 0;
+}
+
+.btn--small {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.85rem;
+}
+
+.warning {
+    color: #d4a72c;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    background: rgba(210, 167, 44, 0.1);
+    border: 1px solid rgba(210, 167, 44, 0.35);
+    font-size: 0.9rem;
+    margin: 0 0 0.75rem;
+}
+
+.alerts {
+    margin-bottom: 1.5rem;
+}
+
+.alerts .warning:last-child {
+    margin-bottom: 0;
+}
+
+.error-inline {
+    color: var(--danger);
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    background: rgba(248, 81, 73, 0.1);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.empty-state {
+    color: var(--text-muted);
+    margin: 0;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-muted);
+    border: 1px dashed var(--border);
+    text-align: center;
+}
+
+/* Loading overlay */
+
+body.is-loading {
+    overflow: hidden;
+}
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    background: rgba(13, 17, 23, 0.82);
+    backdrop-filter: blur(6px);
+    padding: 1.5rem;
+}
+
+.loading-overlay[hidden] {
+    display: none;
+}
+
+.loading-card {
+    width: min(100%, 380px);
+    padding: 2rem 1.75rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 1.25rem;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    border-top-color: var(--green);
+    animation: spin 0.85s linear infinite;
+}
+
+.loading-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.loading-message {
+    margin: 0 0 0.5rem;
+    color: var(--accent);
+    font-size: 0.95rem;
+    min-height: 1.4rem;
+}
+
+.loading-hint {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Not found */
 
 .not-found {
