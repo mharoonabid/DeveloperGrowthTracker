@@ -71,6 +71,37 @@
         <strong>{{ contributions.total_contributions }}</strong> contributions in the last year
     </p>
 
+    {% if contributions.streaks %}
+    <div class="streak-cards" id="streak-display">
+        <div class="streak-card streak-card--current{% if contributions.streaks.current_streak > 0 %} streak-card--active{% endif %}">
+            <div class="streak-icon">🔥</div>
+            <div class="streak-body">
+                <div class="streak-number">{{ contributions.streaks.current_streak }}</div>
+                <div class="streak-label">day{{ 's' if contributions.streaks.current_streak != 1 else '' }} streak</div>
+                {% if contributions.streaks.current_streak_start %}
+                <div class="streak-dates">Since {{ contributions.streaks.current_streak_start }}</div>
+                {% else %}
+                <div class="streak-dates">No active streak</div>
+                {% endif %}
+                <div class="streak-badge">Current Streak</div>
+            </div>
+        </div>
+        <div class="streak-card streak-card--longest">
+            <div class="streak-icon">🏆</div>
+            <div class="streak-body">
+                <div class="streak-number">{{ contributions.streaks.longest_streak }}</div>
+                <div class="streak-label">day{{ 's' if contributions.streaks.longest_streak != 1 else '' }} streak</div>
+                {% if contributions.streaks.longest_streak_start and contributions.streaks.longest_streak_end %}
+                <div class="streak-dates">{{ contributions.streaks.longest_streak_start }} — {{ contributions.streaks.longest_streak_end }}</div>
+                {% else %}
+                <div class="streak-dates">No streak recorded</div>
+                {% endif %}
+                <div class="streak-badge">Longest Streak</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="contribution-heatmap" aria-label="Contribution heatmap for the last year">
         {% for week in contributions.weeks %}
         <div class="contribution-week">

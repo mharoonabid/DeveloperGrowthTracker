@@ -162,6 +162,71 @@ def compute_language_usage_by_bytes(
     }
 
 
+def compute_streaks(days):
+    """Compute current streak and longest streak from daily contribution data.
+
+    A streak is consecutive days with >= 1 contribution.
+    Today with 0 contributions does not break the current streak
+    (the user still has time to contribute today).
+    """
+    if not days:
+        return {
+            "current_streak": 0,
+            "current_streak_start": None,
+            "longest_streak": 0,
+            "longest_streak_start": None,
+            "longest_streak_end": None,
+        }
+
+    from datetime import date as date_type
+
+    sorted_days = sorted(days, key=lambda d: d["date"])
+
+    today_str = date_type.today().isoformat()
+
+    # --- Longest streak ---
+    longest = 0
+    longest_start = None
+    longest_end = None
+    run = 0
+    run_start = None
+
+    for day in sorted_days:
+        if day["count"] >= 1:
+            if run == 0:
+                run_start = day["date"]
+            run += 1
+            if run > longest:
+                longest = run
+                longest_start = run_start
+                longest_end = day["date"]
+        else:
+            run = 0
+
+    # --- Current streak ---
+    current = 0
+    current_start = None
+
+    for day in reversed(sorted_days):
+        if day["date"] > today_str:
+            continue
+        if day["date"] == today_str and day["count"] == 0:
+            continue
+        if day["count"] >= 1:
+            current += 1
+            current_start = day["date"]
+        else:
+            break
+
+    return {
+        "current_streak": current,
+        "current_streak_start": current_start,
+        "longest_streak": longest,
+        "longest_streak_start": longest_start,
+        "longest_streak_end": longest_end,
+    }
+
+
 def fetch_contribution_graph(username, token):
     if not token:
         raise ValueError("GITHUB_TOKEN is required for contribution data")
@@ -232,6 +297,8 @@ def fetch_contribution_graph(username, token):
     for day in days:
         monthly_totals[day["date"][:7]] += day["count"]
 
+    streaks = compute_streaks(days)
+
     return {
         "total_contributions": calendar["totalContributions"],
         "days": days,
@@ -240,6 +307,7 @@ def fetch_contribution_graph(username, token):
             {"month": month, "count": count}
             for month, count in sorted(monthly_totals.items())
         ],
+        "streaks": streaks,
     }
 
 
