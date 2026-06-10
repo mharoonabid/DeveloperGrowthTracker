@@ -12,6 +12,7 @@ A full-stack GitHub Developer Analytics Dashboard that showcases real-time repos
 - **Repository Analytics:** Aggregate stats across public repositories including total stars, forks, open issues, watchers, average stars per repository, and the user's most starred repository.
 - **Language Distribution:** Detailed breakdown of programming languages used across public repositories, calculated in bytes and percentages, utilizing multi-threaded API fetching.
 - **Contribution Graph:** Visual contribution calendar mapping weekly and monthly activity levels (requires a GitHub API Token).
+- **Contribution Streaks:** Automatically computes and displays **Current Streak** 🔥 (consecutive days with ≥ 1 contribution, tolerating today with zero) and **Longest Streak** 🏆 (the all-time longest run of consecutive contribution days) with start/end dates, animated icons, and styled streak cards. Streak data is derived from the GitHub GraphQL contribution calendar.
 - **TTL Caching:** MongoDB-backed cache that stores user profiles for a configurable duration (default: 6 hours) to minimize API requests and avoid GitHub rate limiting.
 - **Robust Error Handling:** Detects invalid usernames, rate-limiting, and missing database configs, fallback gracefully to live fetching with clear UI warnings.
 - **Premium Responsive Design:** Custom dark-themed layout built with vanilla CSS, subtle micro-animations, glassmorphism, responsive grid layouts, and support for all device sizes.
