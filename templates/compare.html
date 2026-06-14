@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Developers — Developer Growth Tracker{% endblock %}
+
+{% block content %}
+<section class="compare-hero">
+    <span class="hero-badge">Head-to-Head</span>
+    <h1>Compare GitHub Developers</h1>
+    <p class="compare-intro">
+        Enter two usernames to see a side-by-side breakdown of stars, languages,
+        contribution streaks, and activity metrics.
+    </p>
+
+    <form class="compare-form" method="POST" action="{{ url_for('compare') }}" data-loading data-compare>
+        <div class="compare-inputs">
+            <div class="compare-input-group">
+                <label for="username1">Developer A</label>
+                <input
+                    class="search-input"
+                    id="username1"
+                    type="text"
+                    name="username1"
+                    placeholder="e.g. torvalds"
+                    value="{{ username1 or '' }}"
+                    required
+                />
+            </div>
+            <span class="compare-vs">VS</span>
+            <div class="compare-input-group">
+                <label for="username2">Developer B</label>
+                <input
+                    class="search-input"
+                    id="username2"
+                    type="text"
+                    name="username2"
+                    placeholder="e.g. octocat"
+                    value="{{ username2 or '' }}"
+                    required
+                />
+            </div>
+        </div>
+        <button class="btn compare-submit" type="submit">Compare</button>
+    </form>
+</section>
+
+{% if api_error %}
+<p class="error">{{ api_error }}</p>
+{% endif %}
+
+{% if left and right %}
+<div class="compare-scoreboard card">
+    <div class="scoreboard-side scoreboard-side--left {% if left_wins > right_wins %}scoreboard-side--leading{% endif %}">
+        <img src="{{ left.avatar_url }}" alt="" class="scoreboard-avatar">
+        <strong>{{ left.name }}</strong>
+        <span class="scoreboard-login">@{{ left.login }}</span>
+        <span class="scoreboard-wins">{{ left_wins }} wins</span>
+    </div>
+    <div class="scoreboard-vs">VS</div>
+    <div class="scoreboard-side scoreboard-side--right {% if right_wins > left_wins %}scoreboard-side--leading{% endif %}">
+        <img src="{{ right.avatar_url }}" alt="" class="scoreboard-avatar">
+        <strong>{{ right.name }}</strong>
+        <span class="scoreboard-login">@{{ right.login }}</span>
+        <span class="scoreboard-wins">{{ right_wins }} wins</span>
+    </div>
+</div>
+
+{% if warnings %}
+<div class="alerts">
+    {% for message in warnings %}
+    <p class="warning">{{ message }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="compare-grid">
+    <div class="compare-panel card">
+        <div class="compare-panel-header">
+            <img src="{{ left.avatar_url }}" alt="" class="compare-panel-avatar">
+            <div>
+                <h2>{{ left.name }}</h2>
+                <p class="profile-login">@{{ left.login }}</p>
+            </div>
+        </div>
+        {% if left.bio %}
+        <p class="compare-bio">{{ left.bio }}</p>
+        {% endif %}
+        <div class="compare-panel-stats">
+            <div class="compare-stat">
+                <strong>{{ left.total_stars }}</strong>
+                <span>Stars</span>
+            </div>
+            <div class="compare-stat">
+                <strong>{{ left.total_repos }}</strong>
+                <span>Repos</span>
+            </div>
+            <div class="compare-stat">
+                <strong>{{ left.total_contributions }}</strong>
+                <span>Contributions</span>
+            </div>
+            <div class="compare-stat">
+                <strong>{{ left.current_streak }}</strong>
+                <span>Current Streak</span>
+            </div>
+        </div>
+        {% if left.top_language %}
+        <p class="compare-detail">
+            <strong>Top language:</strong>
+            {{ left.top_language.name }} ({{ left.top_language.percentage }}%)
+        </p>
+        {% endif %}
+        {% if left.most_active_month_count %}
+        <p class="compare-detail">
+            <strong>Most active month:</strong>
+            {{ left.most_active_month_label }} ({{ left.most_active_month_count }})
+        </p>
+        {% endif %}
+        {% if left.analytics_error %}
+        <p class="error-inline">{{ left.analytics_error }}</p>
+        {% endif %}
+        {% if left.contributions_error %}
+        <p class="error-inline">{{ left.contributions_error }}</p>
+        {% endif %}
+    </div>
+
+    <div class="compare-panel card">
+        <div class="compare-panel-header">
+            <img src="{{ right.avatar_url }}" alt="" class="compare-panel-avatar">
+            <div>
+                <h2>{{ right.name }}</h2>
+                <p class="profile-login">@{{ right.login }}</p>
+            </div>
+        </div>
+        {% if right.bio %}
+        <p class="compare-bio">{{ right.bio }}</p>
+        {% endif %}
+        <div class="compare-panel-stats">
+            <div class="compare-stat">
+                <strong>{{ right.total_stars }}</strong>
+                <span>Stars</span>
+            </div>
+            <div class="compare-stat">
+                <strong>{{ right.total_repos }}</strong>
+                <span>Repos</span>
+            </div>
+            <div class="compare-stat">
+                <strong>{{ right.total_contributions }}</strong>
+                <span>Contributions</span>
+            </div>
+            <div class="compare-stat">
+                <strong>{{ right.current_streak }}</strong>
+                <span>Current Streak</span>
+            </div>
+        </div>
+        {% if right.top_language %}
+        <p class="compare-detail">
+            <strong>Top language:</strong>
+            {{ right.top_language.name }} ({{ right.top_language.percentage }}%)
+        </p>
+        {% endif %}
+        {% if right.most_active_month_count %}
+        <p class="compare-detail">
+            <strong>Most active month:</strong>
+            {{ right.most_active_month_label }} ({{ right.most_active_month_count }})
+        </p>
+        {% endif %}
+        {% if right.analytics_error %}
+        <p class="error-inline">{{ right.analytics_error }}</p>
+        {% endif %}
+        {% if right.contributions_error %}
+        <p class="error-inline">{{ right.contributions_error }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h2 class="section-title">Metric Comparison</h2>
+    <div class="compare-table-wrap">
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>{{ left.login }}</th>
+                    <th>{{ right.login }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in comparison_rows %}
+                <tr>
+                    <td>{{ row.label }}</td>
+                    <td class="{% if row.winner == 'left' %}compare-winner{% endif %}">
+                        {{ row.left_value }}
+                    </td>
+                    <td class="{% if row.winner == 'right' %}compare-winner{% endif %}">
+                        {{ row.right_value }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="compare-lang-grid">
+    <div class="card">
+        <h2 class="section-title">{{ left.login }} — Languages</h2>
+        {% if left.top_languages %}
+        <ul class="language-bars">
+            {% for lang in left.top_languages %}
+            <li>
+                <div class="language-bar-header">
+                    <span>{{ lang.name }}</span>
+                    <span>{{ lang.percentage }}%</span>
+                </div>
+                <div class="language-bar-track">
+                    <div class="language-bar-fill compare-bar-left" style="width: {{ lang.percentage }}%"></div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-state">No language data available.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2 class="section-title">{{ right.login }} — Languages</h2>
+        {% if right.top_languages %}
+        <ul class="language-bars">
+            {% for lang in right.top_languages %}
+            <li>
+                <div class="language-bar-header">
+                    <span>{{ lang.name }}</span>
+                    <span>{{ lang.percentage }}%</span>
+                </div>
+                <div class="language-bar-track">
+                    <div class="language-bar-fill compare-bar-right" style="width: {{ lang.percentage }}%"></div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-state">No language data available.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="compare-actions">
+    <a href="{{ url_for('home') }}" class="btn btn--secondary">Analyze single user</a>
+</div>
+{% endif %}
+{% endblock %}

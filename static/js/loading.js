@@ -5,13 +5,21 @@
     }
 
     const messageEl = overlay.querySelector(".loading-message");
-    const steps = [
-        "Fetching GitHub profile…",
-        "Loading repositories…",
-        "Analyzing languages in parallel…",
-        "Building contribution graph…",
-        "Almost done…",
-    ];
+    const steps = form.hasAttribute("data-compare")
+        ? [
+              "Loading first developer…",
+              "Loading second developer…",
+              "Comparing stars and repos…",
+              "Analyzing languages…",
+              "Building comparison…",
+          ]
+        : [
+              "Fetching GitHub profile…",
+              "Loading repositories…",
+              "Analyzing languages in parallel…",
+              "Building contribution graph…",
+              "Almost done…",
+          ];
     let stepIndex = 0;
     let stepTimer = null;
 

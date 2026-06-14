@@ -14,6 +14,10 @@
                 <span class="logo-icon">📈</span>
                 Developer Growth Tracker
             </a>
+            <nav class="header-nav">
+                <a href="{{ url_for('home') }}" class="header-nav-link">Analyze</a>
+                <a href="{{ url_for('compare') }}" class="header-nav-link">Compare</a>
+            </nav>
             {% block header_search %}{% endblock %}
         </div>
     </header>
