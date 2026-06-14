@@ -12,7 +12,7 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py github_analytics.py github_errors.py mongodb_cache.py profile_loader.py ./
+COPY app.py github_analytics.py github_errors.py mongodb_cache.py profile_loader.py compare_builder.py ./
 COPY templates/ templates/
 COPY static/ static/
 
